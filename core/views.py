@@ -72,3 +72,5 @@ def withdrawal(request):
         amount = request.POST['amount']
         agent = Agent.objects.get(pk=request.POST['agent'])
         transaction = Transaction(account=account, amount=amount, agent=agent, transaction_type='Withdrawal')
+
+        

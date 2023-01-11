@@ -105,5 +105,52 @@ def make_savings(request):
     members = Member.objects.all()
     return render(request, 'make_savings.html', {'members': members})
 
+def make_savings_withdrawal(request):
+if request.method == 'POST':
+member = Member.objects.get(pk=request.POST['member'])
+savings = Savings.objects.get(member=member)
+account = Account.objects.get(pk=request.POST['account'])
+amount = request.POST['amount']
+pin = request.POST['pin']
+if savings.savings_amount >= amount and account.member.pin == pin:
+savings.savings_amount -= amount
+savings.save()
+transaction = Transaction(account=account, amount=amount, transaction_type='Savings Withdrawal')
+transaction.save()
+account.balance += amount
+account.save()
+return redirect('home')
+else:
+return redirect('savings_withdrawal')
+members = Member.objects.all()
+accounts = Account.objects.filter(member=member)
+return render(request, 'savings_withdrawal.html', {'members': members, 'accounts': accounts})
+
+def make_savings_deposit(request):
+if request.method == 'POST':
+member = Member.objects.get(pk=request.POST['member'])
+savings = Savings.objects.get(member=member)
+account = Account.objects.get(pk=request.POST['account'])
+amount = request.POST['amount']
+pin = request.POST['pin']
+if account.balance >= amount and account.member.pin == pin:
+savings.savings_amount += amount
+savings.save()
+transaction = Transaction(account=account, amount=amount, transaction_type='Savings Deposit')
+transaction.save()
+account.balance -= amount
+account.save()
+return redirect('home')
+else:
+return redirect('savings_deposit')
+members = Member.objects.all()
+accounts = Account.objects.filter(member=member)
+return render(request, 'savings_deposit.html', {'members': members, 'accounts': accounts})
+
+
+
+
+
+
 
 

@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 
 # Create your views here.
-from .models import Member, Account, Loan, Savings
+from .models import Member, Account, Loan, Savings, Teller, Agent, Transaction
 
 def register_member(request):
     if request.method == 'POST':
@@ -51,3 +51,24 @@ def make_savings(request):
         return redirect('home')
     members = Member.objects.all()
     return render(request, 'make_savings.html', {'members': members})
+
+def deposit(request):
+    if request.method == 'POST':
+        account = Account.objects.get(pk=request.POST['account'])
+        amount = request.POST['amount']
+        teller = Teller.objects.get(pk=request.POST['teller'])
+        transaction = Transaction(account=account, amount=amount, teller=teller, transaction_type='Deposit')
+        transaction.save()
+        account.balance += amount
+        account.save()
+        return redirect('home')
+    accounts = Account.objects.all()
+    tellers = Teller.objects.all()
+    return render(request, 'deposit.html', {'accounts': accounts, 'tellers': tellers})
+
+def withdrawal(request):
+    if request.method == 'POST':
+        account = Account.objects.get(pk=request.POST['account'])
+        amount = request.POST['amount']
+        agent = Agent.objects.get(pk=request.POST['agent'])
+        transaction = Transaction(account=account, amount=amount, agent=agent, transaction_type='Withdrawal')

@@ -3,6 +3,8 @@ from django.shortcuts import render, redirect
 # Create your views here.
 from .models import Member, Account, Loan, Savings, Teller, Agent, Transaction
 
+from django.contrib.auth.decorators import login_required
+
 def register_member(request):
     if request.method == 'POST':
         first_name = request.POST['first_name']
@@ -52,6 +54,7 @@ def make_savings(request):
     members = Member.objects.all()
     return render(request, 'make_savings.html', {'members': members})
 
+@login_required
 def deposit(request):
     if request.method == 'POST':
         account = Account.objects.get(pk=request.POST['account'])
@@ -66,6 +69,7 @@ def deposit(request):
     tellers = Teller.objects.all()
     return render(request, 'deposit.html', {'accounts': accounts, 'tellers': tellers})
 
+@login_required
 def withdrawal(request):
     if request.method == 'POST':
         account = Account.objects.get(pk=request.POST['account'])
@@ -73,4 +77,3 @@ def withdrawal(request):
         agent = Agent.objects.get(pk=request.POST['agent'])
         transaction = Transaction(account=account, amount=amount, agent=agent, transaction_type='Withdrawal')
 
-        

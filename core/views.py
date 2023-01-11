@@ -1,9 +1,60 @@
 from django.shortcuts import render, redirect
 
 # Create your views here.
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import render, redirect
 from .models import Member, Account, Loan, Savings, Teller, Agent, Transaction
 
-from django.contrib.auth.decorators import login_required
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            return redirect('login')
+    return render(request, 'login.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+@login_required
+def deposit(request):
+    if request.method == 'POST':
+        account = Account.objects.get(pk=request.POST['account'])
+        amount = request.POST['amount']
+        pin = request.POST['pin']
+        if account.member.pin == pin:
+            transaction = Transaction(account=account, amount=amount, transaction_type='Deposit')
+            transaction.save()
+            account.balance += amount
+            account.save()
+            return redirect('home')
+        else:
+            return redirect('deposit')
+    accounts = Account.objects.all()
+    return render(request, 'deposit.html', {'accounts': accounts})
+
+@user_passes_test(lambda u: u.is_teller)
+def withdrawal(request):
+    if request.method == 'POST':
+        account = Account.objects.get(pk=request.POST['account'])
+        amount = request.POST['amount']
+        pin = request.POST['pin']
+        if account.member.pin == pin:
+            transaction = Transaction(account=account, amount=amount, transaction_type='Withdrawal')
+            transaction.save()
+            account.balance -= amount
+            account.save()
+            return redirect('home')
+        else:
+            return redirect('withdrawal')
+    accounts = Account.objects.all
+
 
 def register_member(request):
     if request.method == 'POST':
@@ -54,26 +105,5 @@ def make_savings(request):
     members = Member.objects.all()
     return render(request, 'make_savings.html', {'members': members})
 
-@login_required
-def deposit(request):
-    if request.method == 'POST':
-        account = Account.objects.get(pk=request.POST['account'])
-        amount = request.POST['amount']
-        teller = Teller.objects.get(pk=request.POST['teller'])
-        transaction = Transaction(account=account, amount=amount, teller=teller, transaction_type='Deposit')
-        transaction.save()
-        account.balance += amount
-        account.save()
-        return redirect('home')
-    accounts = Account.objects.all()
-    tellers = Teller.objects.all()
-    return render(request, 'deposit.html', {'accounts': accounts, 'tellers': tellers})
 
-@login_required
-def withdrawal(request):
-    if request.method == 'POST':
-        account = Account.objects.get(pk=request.POST['account'])
-        amount = request.POST['amount']
-        agent = Agent.objects.get(pk=request.POST['agent'])
-        transaction = Transaction(account=account, amount=amount, agent=agent, transaction_type='Withdrawal')
 
